@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+
+# Build outputs
+dist/
+build/
+*.log
+
+# Database & server data (nur lokal/auf Server)
+backend/database/*.db
+backend/database/*.db-shm
+backend/database/*.db-wal
+data/
+backups/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Password protection (never commit)
+.htpasswd
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# TypeScript
+*.tsbuildinfo
+
+# Vite
+.vite/

@@ -1,0 +1,20 @@
+{
+  "name": "doppelkopf-counter-backend",
+  "version": "1.0.0",
+  "description": "Backend API for Doppelkopf Counter",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "migrate": "node src/migrations/add-game-day.js"
+  },
+  "keywords": ["doppelkopf", "card-game", "counter"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "better-sqlite3": "^9.2.2",
+    "cors": "^2.8.5"
+  }
+}
