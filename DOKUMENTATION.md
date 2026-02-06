@@ -12,9 +12,10 @@ Diese Dokumentation beschreibt die Anwendung, das Hosting auf beliebigen Webserv
 4. [Lokale Entwicklung](#4-lokale-entwicklung)
 5. [Hosting auf einem Webserver](#5-hosting-auf-einem-webserver)
 6. [Wartung & Betrieb](#6-wartung--betrieb)
-7. [Konfiguration](#7-konfiguration)
-8. [API-Referenz](#8-api-referenz)
-9. [Weitere Dokumentation](#9-weitere-dokumentation)
+7. [Code mit GitHub verwalten](#7-code-mit-github-verwalten)
+8. [Konfiguration](#8-konfiguration)
+9. [API-Referenz](#9-api-referenz)
+10. [Weitere Dokumentation](#10-weitere-dokumentation)
 
 ---
 
@@ -104,6 +105,7 @@ DoppelkopfCounter/
 │
 ├── scripts/
 │   ├── deploy.sh               # Docker-Deployment
+│   ├── update-server.sh        # Git Pull + Docker neu bauen (auf Server)
 │   ├── backup.sh               # DB-Backup
 │   └── create-password.sh      # .htpasswd erzeugen
 │
@@ -113,6 +115,7 @@ DoppelkopfCounter/
 │
 ├── README.md
 ├── DOKUMENTATION.md            # Diese Datei
+├── GITHUB.md                   # GitHub: Repo anlegen, Server anbinden, Update-Workflow
 ├── DEPLOYMENT.md               # Ausführliches Docker-Deployment
 ├── QUICK_DEPLOY.md             # Kurze Deploy-Anleitung
 ├── DOPPELKOPF_REGELN.md        # Punkteberechnung
@@ -183,7 +186,7 @@ Geeignet für: VPS, eigene Server (Ubuntu, Debian, etc.), beliebige Cloud mit Do
 
 #### Schritte (Kurz)
 
-1. **Code auf den Server bringen** (git clone, rsync oder Upload).
+1. **Code auf den Server bringen:** per **Git** von GitHub klonen (empfohlen, siehe [Code mit GitHub verwalten](#7-code-mit-github-verwalten)) oder per rsync/Upload.
 2. **Umgebung vorbereiten:**
    ```bash
    mkdir -p data/database
@@ -290,14 +293,16 @@ Wichtig: Das Frontend ruft nur relative Pfade wie `/api/players` auf; die Basis-
 
 ### 6.1 Updates einspielen
 
-#### Mit Docker
+Wenn das Projekt mit **GitHub** verwaltet wird: siehe [Abschnitt 7 – Code mit GitHub verwalten](#7-code-mit-github-verwalten) für den kompletten Workflow (lokal pushen → auf dem Server pullen und neu starten).
+
+#### Mit Docker (manuell)
 
 ```bash
 cd /opt/doppelkopf
-# Code aktualisieren (git pull oder rsync)
-git pull   # oder rsync vom Entwicklungsrechner
+# Code aktualisieren
+git pull   # falls Repo an GitHub angebunden; sonst rsync vom Entwicklungsrechner
 
-# Backup der DB (siehe 6.2)
+# Optional: Backup der DB (siehe 6.2)
 ./scripts/backup.sh
 
 # Neu bauen und neu starten
@@ -309,6 +314,9 @@ docker-compose up -d
 docker-compose ps
 docker-compose logs -f
 ```
+
+**Ein Befehl (wenn Repo an GitHub angebunden):**  
+`./scripts/update-server.sh` führt `git pull`, `docker-compose down`, `docker-compose build --no-cache` und `docker-compose up -d` aus (einmalig `chmod +x scripts/update-server.sh` falls nötig).
 
 #### Ohne Docker
 
@@ -413,7 +421,30 @@ Details: **PASSWORD_PROTECTION.md**.
 
 ---
 
-## 7. Konfiguration
+## 7. Code mit GitHub verwalten
+
+Wenn du den Quellcode auf **GitHub** hostest und den Server an das Repo anbindest, kannst du alles von deinem Rechner aus verwalten und Updates mit wenigen Befehlen ausrollen.
+
+### Workflow im Alltag
+
+| Schritt | Wo | Aktion |
+|--------|----|--------|
+| 1. Code ändern | Lokal (z. B. Mac) | Im Projekt arbeiten, speichern |
+| 2. Nach GitHub pushen | Lokal | `git add .` → `git commit -m "Beschreibung"` → `git push` |
+| 3. Auf Server aktualisieren | Server (SSH) | `cd /opt/doppelkopf` → `./scripts/update-server.sh` |
+
+Das Skript `scripts/update-server.sh` holt den neuesten Stand per `git pull` und startet die Docker-Container neu (`docker-compose down` → `build --no-cache` → `up -d`).
+
+### Ersteinrichtung
+
+- **Lokal:** Repo auf GitHub anlegen, dann im Projektordner `git init`, `git add .`, `git commit`, `git remote add origin <URL>`, `git push -u origin main`.
+- **Server:** Bestehendes Verzeichnis anbinden (`git init`, `git remote add`, `git fetch`, `git add .`, `git reset --hard origin/main`, Branch setzen) oder frisch klonen und danach `data/` sowie `.htpasswd` aus einem Backup übernehmen.
+
+Ausführliche Anleitung inkl. „dubious ownership“, „untracked files would be overwritten“ und SSH-URL: **GITHUB.md**.
+
+---
+
+## 8. Konfiguration
 
 ### Umgebungsvariablen (Backend)
 
@@ -441,7 +472,7 @@ Im Normalfall reicht die relative URL `/api` (in `frontend/src/services/api.ts`:
 
 ---
 
-## 8. API-Referenz
+## 9. API-Referenz
 
 Basis-URL: `https://ihre-domain.de/api` (oder `http://localhost:3000/api` lokal).
 
@@ -486,11 +517,12 @@ Basis-URL: `https://ihre-domain.de/api` (oder `http://localhost:3000/api` lokal)
 
 ---
 
-## 9. Weitere Dokumentation
+## 10. Weitere Dokumentation
 
 | Datei | Inhalt |
 |-------|--------|
 | **README.md** | Projektüberblick, lokale Entwicklung, Docker-Quickstart |
+| **GITHUB.md** | Projekt auf GitHub pushen, Server anbinden, Update-Workflow (lokal push → Server pull + update-server.sh) |
 | **DEPLOYMENT.md** | Ausführliches Docker-Deployment (Ubuntu), Firewall, SSL, Backup, Troubleshooting |
 | **QUICK_DEPLOY.md** | Kurze Schritte für Deployment mit Docker |
 | **DOPPELKOPF_REGELN.md** | Punkteberechnung nach DDV, Beispiele |

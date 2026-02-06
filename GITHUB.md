@@ -146,17 +146,26 @@ sudo tar -czf /tmp/doppelkopf-backup-$(date +%Y%m%d).tar.gz -C /opt/doppelkopf .
 cd /opt/doppelkopf
 
 git init
+# Falls Git „dubious ownership“ meldet (z. B. weil du als root arbeitest):
+git config --global --add safe.directory /opt/doppelkopf
+
 git remote add origin https://github.com/DEIN_USERNAME/DoppelkopfCounter.git
 # Bei SSH statt HTTPS:
 # git remote add origin git@github.com:DEIN_USERNAME/DoppelkopfCounter.git
 
 git fetch origin
-git checkout -B main origin/main
+# Wenn Git „untracked working tree files would be overwritten“ meldet: erst stagen, dann zurücksetzen:
+git add .
+git reset --hard origin/main
+git branch -M main
 git branch --set-upstream-to=origin/main main
 ```
 
-- `git checkout -B main origin/main` legt den lokalen Branch `main` an den Stand von GitHub und stellt den Arbeitsordner darauf um. Dateien in `.gitignore` (z. B. `.htpasswd`, `data/`) bleiben unverändert.
-- Falls Git meckert (z. B. „would be overwritten“), zuerst lokale Änderungen wegräumen: `git checkout -- .` oder gezielt die genannten Dateien sichern, dann obige Schritte wiederholen.
+Falls **kein** Fehler mit „untracked files“ kommt, reicht stattdessen:  
+`git checkout -B main origin/main` und danach `git branch --set-upstream-to=origin/main main`.
+
+- `git add .` macht die bestehenden Dateien für Git „bekannt“ (`.gitignore` gilt, also werden `.htpasswd`, `data/` nicht gestaged).
+- `git reset --hard origin/main` setzt den aktuellen Branch und den Arbeitsordner auf den Stand von GitHub. Dateien in `.gitignore` bleiben unverändert.
 
 **3. Prüfen:**
 
