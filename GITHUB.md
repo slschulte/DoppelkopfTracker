@@ -4,6 +4,17 @@ So legst du das Projekt auf GitHub an und arbeitest von dort aus weiter.
 
 ---
 
+## Workflow-Übersicht
+
+| Wo | Aktion |
+|----|--------|
+| **Lokal (Mac)** | Code ändern → `git add .` → `git commit -m "..."` → `git push` |
+| **Server** | `cd /opt/doppelkopf` → `git pull` → `./scripts/update-server.sh` (oder Docker-Befehle von Hand) |
+
+Details: Abschnitt 4 (lokal pushen), Abschnitt 5 (Server anbinden / Updates einspielen).
+
+---
+
 ## 1. Projekt auf GitHub vorbereiten
 
 ### .gitignore prüfen
@@ -121,34 +132,65 @@ Dann **Daten und Konfiguration** aus dem Backup zurückkopieren (nicht überschr
 
 ### Bereits bestehendes Verzeichnis mit GitHub verbinden
 
-Falls `/opt/doppelkopf` schon existiert und du es an GitHub anbinden willst:
+Falls `/opt/doppelkopf` schon existiert (z. B. per rsync deployed) und du es an GitHub anbinden willst:
+
+**1. Optional: Kurz sichern** (data/, .htpasswd werden von Git nicht angetastet, zur Sicherheit trotzdem sinnvoll):
+
+```bash
+sudo tar -czf /tmp/doppelkopf-backup-$(date +%Y%m%d).tar.gz -C /opt/doppelkopf .htpasswd data 2>/dev/null || true
+```
+
+**2. Git anbinden und Stand von GitHub holen:**
 
 ```bash
 cd /opt/doppelkopf
 
 git init
 git remote add origin https://github.com/DEIN_USERNAME/DoppelkopfCounter.git
+# Bei SSH statt HTTPS:
+# git remote add origin git@github.com:DEIN_USERNAME/DoppelkopfCounter.git
+
 git fetch origin
-git branch -M main
-git set-upstream-to origin main
-# Bestehende Dateien behalten, nur Repo-Inhalt holen:
-git reset origin/main
-# Oder sauber: erst data/.htpasswd sichern, dann git pull (ggf. Konflikte lösen)
+git checkout -B main origin/main
+git branch --set-upstream-to=origin/main main
 ```
 
-Sauberer Weg: **Backup von `/opt/doppelkopf`** (besonders `data/`, `.htpasswd`), dann **neu klonen** und Backup-Daten wieder in das geklonte Repo kopieren.
+- `git checkout -B main origin/main` legt den lokalen Branch `main` an den Stand von GitHub und stellt den Arbeitsordner darauf um. Dateien in `.gitignore` (z. B. `.htpasswd`, `data/`) bleiben unverändert.
+- Falls Git meckert (z. B. „would be overwritten“), zuerst lokale Änderungen wegräumen: `git checkout -- .` oder gezielt die genannten Dateien sichern, dann obige Schritte wiederholen.
+
+**3. Prüfen:**
+
+```bash
+git status
+git log --oneline -3
+```
+
+Danach kannst du Updates mit `git pull` und dem unten beschriebenen Ablauf (oder `./scripts/update-server.sh`) einspielen.
+
+**Alternative (sauber, aber mehr Schritte):** Backup von `/opt/doppelkopf` (besonders `data/`, `.htpasswd`), Verzeichnis umbenennen, frisch von GitHub klonen, dann `data/` und `.htpasswd` aus dem Backup zurückkopieren.
 
 ### Updates einspielen (nach git push von deinem Rechner)
+
+**Manuell auf dem Server:**
 
 ```bash
 cd /opt/doppelkopf
 git pull
 
-# Bei Docker: neu bauen und starten
 docker-compose down
 docker-compose build --no-cache
 docker-compose up -d
 ```
+
+**Oder ein Befehl** (Skript liegt im Repo, also nach dem ersten Anbinden/Klonen vorhanden):
+
+```bash
+cd /opt/doppelkopf
+chmod +x scripts/update-server.sh   # einmalig, falls nötig
+./scripts/update-server.sh
+```
+
+Das Skript führt `git pull`, dann `docker-compose down`, `docker-compose build --no-cache` und `docker-compose up -d` aus.
 
 ---
 
