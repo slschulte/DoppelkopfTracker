@@ -14,6 +14,10 @@ if [ ! -f "docker-compose.yml" ]; then
   exit 1
 fi
 
+# Mit SSL-Override bauen/starten, falls vorhanden (HTTPS + Basic Auth)
+COMPOSE="-f docker-compose.yml"
+[ -f "docker-compose.ssl.yml" ] && COMPOSE="$COMPOSE -f docker-compose.ssl.yml"
+
 echo "=== Doppelkopf Counter – Server-Update ==="
 echo "Verzeichnis: $ROOT_DIR"
 echo ""
@@ -23,9 +27,9 @@ git pull
 
 echo ""
 echo "Docker: Container stoppen, neu bauen, starten..."
-docker-compose down
-docker-compose build --no-cache
-docker-compose up -d
+docker-compose $COMPOSE down
+docker-compose $COMPOSE build --no-cache
+docker-compose $COMPOSE up -d
 
 echo ""
 echo "Update abgeschlossen."

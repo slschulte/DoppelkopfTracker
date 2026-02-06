@@ -65,19 +65,23 @@ if [ -f "data/database/doppelkopf.db" ]; then
     cp data/database/doppelkopf.db backups/doppelkopf_${DATE}.db
 fi
 
+# Mit SSL-Override bauen/starten, falls vorhanden (HTTPS + Basic Auth)
+COMPOSE="-f docker-compose.yml"
+[ -f "docker-compose.ssl.yml" ] && COMPOSE="$COMPOSE -f docker-compose.ssl.yml"
+
 # Alte Container stoppen
 if [ "$(docker ps -q -f name=doppelkopf)" ]; then
     info "Stoppe laufende Container..."
-    docker-compose down
+    docker-compose $COMPOSE down
 fi
 
 # Images bauen
 info "Baue Docker Images..."
-docker-compose build --no-cache
+docker-compose $COMPOSE build --no-cache
 
 # Container starten
 info "Starte Container..."
-docker-compose up -d
+docker-compose $COMPOSE up -d
 
 # Warte auf Backend-Start
 info "Warte auf Backend-Start..."
@@ -108,18 +112,18 @@ fi
 
 # Status anzeigen
 info "Container-Status:"
-docker-compose ps
+docker-compose $COMPOSE ps
 
 echo ""
 echo -e "${GREEN}✓ Deployment erfolgreich!${NC}"
 echo ""
 echo "📊 Die Anwendung ist erreichbar unter:"
-echo "   Frontend: http://localhost/"
+echo "   Frontend: http://localhost/ (bzw. https:// mit SSL-Override)"
 echo "   Backend:  http://localhost:3000/api/"
 echo ""
 echo "📝 Nützliche Befehle:"
-echo "   Logs anzeigen:    docker-compose logs -f"
-echo "   Status prüfen:    docker-compose ps"
-echo "   Neu starten:      docker-compose restart"
-echo "   Stoppen:          docker-compose down"
+echo "   Logs anzeigen:    docker-compose $COMPOSE logs -f"
+echo "   Status prüfen:    docker-compose $COMPOSE ps"
+echo "   Neu starten:      docker-compose $COMPOSE restart"
+echo "   Stoppen:          docker-compose $COMPOSE down"
 echo ""

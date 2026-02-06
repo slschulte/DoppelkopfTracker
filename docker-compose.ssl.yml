@@ -1,0 +1,16 @@
+# Override für HTTPS (Let's Encrypt) + Basic Auth
+# Verwendung auf dem Server: docker-compose -f docker-compose.yml -f docker-compose.ssl.yml up -d
+# Build: docker-compose -f docker-compose.yml -f docker-compose.ssl.yml build --no-cache
+
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NGINX_CONF: nginx-auth.conf
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - ./.htpasswd:/etc/nginx/.htpasswd:ro

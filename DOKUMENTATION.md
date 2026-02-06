@@ -418,6 +418,7 @@ Details: **PASSWORD_PROTECTION.md**.
 | DB „readonly“ / Fehler beim Schreiben | Schreibrechte für das Verzeichnis mit `doppelkopf.db` prüfen; bei Docker: Volume-Pfad und Berechtigungen. |
 | Container startet nicht | `docker-compose logs backend` / `frontend`; Port 80/443 nicht doppelt belegen; bei Recreate-Fehler: `docker-compose down`, `docker container prune -f`, dann `docker-compose up -d`. |
 | Alte Version nach Update | Cache leeren (Browser), bei Docker `docker-compose build --no-cache` und ggf. alte Images/Container entfernen. |
+| Browser zeigt „Nicht sicher“ | Seite läuft nur per HTTP. Für HTTPS: Let’s-Encrypt-Zertifikate einrichten, dann mit `docker-compose.ssl.yml` bauen/starten (siehe [Nginx / SSL](#nginx-docker--eigener-server)). |
 
 ---
 
@@ -461,8 +462,8 @@ Im Normalfall reicht die relative URL `/api` (in `frontend/src/services/api.ts`:
 
 ### Nginx (Docker / eigener Server)
 
-- **Ohne Auth:** `frontend/nginx.conf` (Standard).
-- **Mit Auth + SSL:** Inhalt von `frontend/nginx-auth.conf` verwenden; Domain und Pfade zu SSL-Zertifikaten anpassen.
+- **Ohne Auth (nur HTTP):** Standard-Build nutzt `frontend/nginx.conf`.
+- **Mit Auth + SSL (HTTPS):** Auf dem Server `docker-compose.ssl.yml` verwenden – dann wird beim Build `nginx-auth.conf` eingebunden (Let’s Encrypt + Basic Auth). `./scripts/update-server.sh` und `./scripts/deploy.sh` nutzen den SSL-Override automatisch, wenn `docker-compose.ssl.yml` vorhanden ist. Voraussetzung: Zertifikate unter `/etc/letsencrypt/live/<domain>/`, `.htpasswd` im Projektordner, Volumes wie in `docker-compose.yml` bzw. `docker-compose.ssl.yml`.
 - **Proxy:** `location /api { proxy_pass http://backend:3000; ... }` (ohne trailing slash), damit `/api/players` etc. vollständig ans Backend gehen.
 
 ### Passwortschutz & SSL
